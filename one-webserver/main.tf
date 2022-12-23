@@ -30,7 +30,7 @@ resource "aws_instance" "example" {
 }
 
 resource "aws_security_group" "instance" {
-	name = "std02-terraform-example-instance"
+	name = var.security_group_name
 
 	ingress {
 		from_port	  = var.server_port
