@@ -9,7 +9,16 @@ terraform {
       version = "~> 4.0"
     }
   }
+
+  backend "s3" {
+    bucket         = "std02-terraform-state"
+    key            = "stage/services/webserver-cluster/terraform.tfstate"
+    region         = "ap-northeast-2"
+    dynamodb_table = "std02-terraform-locks"
+    encrypt        = true
+  }
 }
+
 provider "aws" {
   region = "ap-northeast-2"
 }
@@ -99,7 +108,7 @@ resource "aws_lb_listener" "http" {
 #로드밸런서 리스너 규칙 생성
 resource "aws_lb_listener_rule" "asg" {
   listener_arn = aws_lb_listener.http.arn
-  priority    = 100
+  priority     = 100
 
   condition {
     path_pattern {
@@ -157,20 +166,20 @@ data "aws_subnets" "default" {
 }
 
 data "terraform_remote_state" "db" {
-	backend = "s3"
+  backend = "s3"
 
-	config = {
-		bucket = "std02-terraform-state"
-		key		 = "stage/data-stores/mysql/terraform.tfstate"
-		region = "ap-northeast-2"
-	}
+  config = {
+    bucket = "std02-terraform-state"
+    key    = "stage/data-stores/mysql/terraform.tfstate"
+    region = "ap-northeast-2"
+  }
 }
 
 data "template_file" "web_output" {
   template = file("${path.module}/web.sh")
   vars = {
     server_port = var.server_port
-		db_address	= data.terraform_remote_state.db.outputs.address
-		db_port			= data.terraform_remote_state.db.outputs.port
-	}
+    db_address  = data.terraform_remote_state.db.outputs.address
+    db_port     = data.terraform_remote_state.db.outputs.port
+  }
 }
